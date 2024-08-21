@@ -1,0 +1,18 @@
+#Fonts 
+font.family :Times New Roman
+mathtext.fontset    :cm 
+font.size   :13
+
+#Grid
+grid.linestyle  : :
+
+# Lines
+lines.linestyle : -
+
+#Axis
+axes.labelsize  : 20
+
+# Saving
+savefig.format:    pdf
+savefig.directory:   Figures
+savefig.bbox_inches: tight
