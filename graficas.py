@@ -20,6 +20,9 @@ fig = plt.figure(figsize=(12,6))
 plt.plot(media["concentracion"], media["T1"], "*--")
 plt.grid()
 plt.ylabel(r"$T_1$ [s]")
-plt.xlabel(r"$H_2O$ %")
+plt.xlabel(r"%$H_2O$ ")
 plt.xticks(media["concentracion"])
+plt.title("Data from SpinSolver", fontsize="xx-large") 
 plt.show()
+
+
