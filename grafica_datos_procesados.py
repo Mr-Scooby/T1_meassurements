@@ -70,6 +70,7 @@ T1_mediado = T_1.groupby(T_1.index).mean()
 logger.info(f"T_1 Values average:\n{T_1}") 
 
 fig = plt.figure(2, figsize=(12,6))
+fig.add_subplot(2,2,2)
 plt.plot(T1_mediado,"*--")
 plt.grid()
 plt.ylabel(r"$T_1 averge $ [s]")

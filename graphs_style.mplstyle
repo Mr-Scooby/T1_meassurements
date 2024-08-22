@@ -14,5 +14,3 @@ axes.labelsize  : 20
 
 # Saving
 savefig.format:    pdf
-savefig.directory:   Figures
-savefig.bbox_inches: tight

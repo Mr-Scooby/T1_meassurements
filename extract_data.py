@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 plt.style.use('./graphs_style.mplstyle')
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 console_handler = logging.StreamHandler()
 formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
@@ -67,6 +67,7 @@ def column_name_formatter(sections, i ):
 
 
 def file_to_DF(file_path):
+    logger.info("converting file to DF")
     sections = section_split(file_path)
     # Dictionary to store the extracted data
     data_dict = {}
@@ -105,19 +106,25 @@ def extract_t1_from_nova(file_path):
 
 
     #    # Process the section and get the data
-        G_value = re.findall(r'G\s*=\s*([\d.e-]+)', data_section)[1]
+        G_values = re.findall(r'G\s*=\s*([\d.e-]+)', data_section)
+        G_value = G_values[1] if len(G_values) >=2 else G_values[0]
         logger.debug(f"G_value: {G_value}")
         logger.debug("#"*100)
-        data_dict[int(column_name[0:2])] = float(G_value)
-        df = pd.DataFrame(data_dict.values(), index=data_dict.keys(), columns=["G_value"]).sort_index()
+        data_dict[column_name] = float(G_value)
+        indexs = [int(re.search(r'(\d+)H2O',key ).group(1)) for key in  data_dict.keys()]
+        df = pd.DataFrame(data_dict.values(), index=indexs, columns=["G_value"]).sort_index()
         df["T1_mnova"] = 1/df["G_value"]
-    logger.error(data_dict)
     return df
-   
 
 if __name__ == "__main__":
     
-    G1_mnova=  extract_t1_from_nova("processed_data.txt")
+    FILE_NAME = "processed_data_2.txt"
+
+    G1_mnova=  extract_t1_from_nova(FILE_NAME)
+    df = file_to_DF(FILE_NAME)
+    logger.info(f"T1 Values from MNOVA:\n{G1_mnova}")
+    logger.info(f"df:\n{df}")
+    logger.info(f"df columns :\n{df.columns}")
     ## Graphs for T_1 from MNOVA
     fig = plt.figure(1, figsize=(12,6))
     plt.plot(G1_mnova["T1_mnova"], "*--")
@@ -126,7 +133,10 @@ if __name__ == "__main__":
     plt.ylabel(r"$T_1$ [s]")
     plt.title(r"MNOVA $T_1$ values", fontsize="xx-large")
 
-    df = file_to_DF("processed_data_2.txt")
+
+
+    ## Graphs for integral vs H2O
+    #df = file_to_DF(FILE_NAME)
     ndf = df.filter(regex="^(?!.*_x$).*", axis=1)
     logger.info(ndf)
 
