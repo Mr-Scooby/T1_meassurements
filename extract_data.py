@@ -118,7 +118,7 @@ def extract_t1_from_nova(file_path):
 
 if __name__ == "__main__":
     
-    FILE_NAME = "processed_data_2.txt"
+    FILE_NAME = "processed_data_3.txt"
 
     G1_mnova=  extract_t1_from_nova(FILE_NAME)
     df = file_to_DF(FILE_NAME)
@@ -146,6 +146,7 @@ if __name__ == "__main__":
     percentage = [int(re.search(r'(\d+)H2O', ndf.columns[i]).group(1).zfill(2)) for i in range(len(ndf.columns))]
     percentage.sort()
 
+    logger.info(f"T1 Values from MNOVA:\n{G1_mnova}")
     # Display the sorted Series
     fig = plt.figure(2, figsize=(12,6))
     plt.plot(percentage, last_values.sort_index(),"*--")
@@ -154,3 +155,4 @@ if __name__ == "__main__":
     plt.ylabel("Integral")
     plt.title(r"Integral vs $H_2O$%", fontsize="xx-large")
     plt.show()
+
