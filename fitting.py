@@ -42,7 +42,7 @@ plt.ylabel(r"M")
 plt.xlabel(r"t [s]")
 #plt.show()
 
-f = lambda t,a, b,c : a - a* np.exp(-t/b + c) 
+f = lambda t,a, b : a*(1-2 * np.exp(-t/b))
 # Fit the function a * np.exp(b * t) + c to x and y
 popt, pcov = curve_fit(f , x, y)
 logger.debug(f"popt output = {popt}")
@@ -51,18 +51,14 @@ logger.debug(f"pcov output = {pcov}")
 
 a = popt[0]
 b = popt[1]
-c = popt[2]
 
 x_1 = np.geomspace(0.1, 60, 500 )
-y_fitted =  a-  a*np.exp(-x_1/b+ c)
+y_fitted =  a*( 1-  2*np.exp(-x_1/b))
 plt.plot(x_1,y_fitted, label="fitting") 
-plt.text(30,5,r"$ f(t) = A - Ae^{-t/T_1 + c}$", size = 20) 
-plt.text(30,0,f"A = {a}\nT_1 = {b}\nC={c}", size = 20) 
-logger.info(f"T1 meassure : {b}")
+plt.text(30,5,r"$ f(t) = A - Ae^{-t/T_1 }$", size = 20) 
+plt.text(30,0,f"A = {a}\nT_1 = {b}\n", size = 20) 
+logger.info(f"T1 meassure : {b}; error = {pcov[1][1]}")
 plt.legend()
-#plt.show()
+plt.show()
 
-
-data = pd.read_xml("mnova_fit_90H2O.xml")
-print(data)
 
