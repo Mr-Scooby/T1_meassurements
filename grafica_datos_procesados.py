@@ -55,11 +55,11 @@ if __name__ == "__main__":
     
     
     fig = plt.figure(1, figsize=(12,6))
-    plt.errorbar(T_1.index, T_1["T1"], T_1["error"],fmt="*--" )
+    plt.errorbar(T_1.index, T_1["T1"], T_1["error"],fmt="." )
     plt.grid()
     plt.ylabel(r"$T_1$ [s]")
     plt.xlabel(r"%$H_2O$ ")
-    plt.xticks(T_1.index)
+#    plt.xticks(T_1.index)
     plt.title("T_1 fit from python", fontsize="xx-large") 
     plt.show()
     
