@@ -26,7 +26,7 @@ def T_1 (x, y):
     logger.debug(f"popt output = {popt}")
     logger.debug(f"pcov output = {pcov}")
     
-    return (popt[1], pcov[1][1])
+    return (popt[1], np.sqrt(np.diag(pcov))[1])
 
 if __name__ == "__main__":
 
