@@ -62,7 +62,7 @@ if __name__ == "__main__":
     plt.xticks(np.arange(0,100,10))
 #    plt.xticks(T_1.index)
     plt.title("T_1 fit from python", fontsize="xx-large") 
-    plt.savefig("grafica_data_4")
+    #plt.savefig("grafica_data_4")
     plt.show()
     
     T1_mediado = T_1.groupby(T_1.index).mean()
