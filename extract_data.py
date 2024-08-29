@@ -43,7 +43,7 @@ def section_split(file_path):
         logger.debug(f"content\n {content}")
 
     # Split the content by header lines
-    sections = re.split(r'(\d{6}-\d{6} T1 \(\d+%H2O\d+%D2O\(non degassed\)\)).*', content)[1:]
+    sections = re.split(r'(\d{6}-\d{6} T1 \(\d+%H2O\d+%D2O).*', content)[1:]
     logger.debug(f"sections = {sections[:4]}")
     logger.info(f"Number of sections : {len(sections)//2}") 
 
@@ -118,7 +118,7 @@ def extract_t1_from_nova(file_path):
 
 if __name__ == "__main__":
     
-    FILE_NAME = "processed_data_3.txt"
+    FILE_NAME = "processed_data_5.txt"
 
     G1_mnova=  extract_t1_from_nova(FILE_NAME)
     df = file_to_DF(FILE_NAME)
@@ -153,6 +153,7 @@ if __name__ == "__main__":
     plt.grid()
     plt.xlabel(r"$H_2O$ %")
     plt.ylabel("Integral")
+    plt.xticks(percentage)
     plt.title(r"Integral vs $H_2O$%", fontsize="xx-large")
     plt.show()
 

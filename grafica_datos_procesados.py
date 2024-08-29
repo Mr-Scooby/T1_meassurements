@@ -30,7 +30,7 @@ def T_1 (x, y):
 
 if __name__ == "__main__":
 
-    FILE_NAME = "processed_data_3.txt"
+    FILE_NAME = "processed_data_4.txt"
     
     data = xd.file_to_DF(FILE_NAME) 
     logger.info(data)
@@ -59,13 +59,15 @@ if __name__ == "__main__":
     plt.grid()
     plt.ylabel(r"$T_1$ [s]")
     plt.xlabel(r"%$H_2O$ ")
+    plt.xticks(np.arange(0,100,10))
 #    plt.xticks(T_1.index)
     plt.title("T_1 fit from python", fontsize="xx-large") 
+    plt.savefig("grafica_data_4")
     plt.show()
     
-#    T1_mediado = T_1.groupby(T_1.index).mean()
-#    logger.info(f"T_1 Values average:\n{T_1}") 
-#    
+    T1_mediado = T_1.groupby(T_1.index).mean()
+    logger.info(f"T_1 Values average:\n{T_1}") 
+    
 #    fig = plt.figure(2, figsize=(12,6))
 #    plt.plot(T1_mediado,"*--")
 #    plt.grid()
