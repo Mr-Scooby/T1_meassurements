@@ -23,23 +23,25 @@ logger.addHandler(console_handler)
 
 def extract_etha_percentage(header):
     """Extracts the ETHA percentage from a header string."""
-    match = re.search(r'\((\d+)%ETHA', header)
+    match = re.search(r'\((\d+(?:\.\d+)?)%ETHA', header)
     if match:
-        return int(match.group(1))
+        return float(match.group(1))
     return 0  # Fallback if no match is found
 
+REGEX_ETHANOL = r'(\d{6}-\d{6} T1 \(\d+(?:\.\d+)?%ETHA\d+(?:\.\d+)?%D2O).*'
 
 def methanol_file_to_df(file_path): 
 
     logger.info("converting file to DF")
-    sections = xd.section_split(file_path, regex=r'(\d{6}-\d{6} T1 \(\d+%ETHA\d+%D2O).*')
+    sections = xd.section_split(file_path, regex= REGEX_ETHANOL)
+    logger.info("Ethanol_data_extraction: Section headers: \n" + "\n".join(sec for sec in sections[::2]))
     sorted_sections = xd.sort_sections(sections,extract_etha_percentage )
     # Dictionary to store the extracted data
     data_dict = {}
     # Process each section
     for idx, header in enumerate(sorted_sections):
         if idx % 2 == 0:  # Ensure we're processing headers
-
+            
             data_section = sorted_sections[idx + 1].strip()
             
             logger.info(f"Extracting data from section: {header}")
@@ -61,10 +63,8 @@ def methanol_file_to_df(file_path):
 
 if __name__ == "__main__":
 
-
-    df = methanol_file_to_df("ethanol_data.txt")
+    df =  methanol_file_to_df("ethanol_data.txt")
     print(df.columns)
-
     col = df.columns
     plt.plot(df[col[0]], df[col[1]])
     plt.plot(df[col[0]], df[col[2]])

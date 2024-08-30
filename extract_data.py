@@ -14,7 +14,7 @@ logger.setLevel(logging.DEBUG)
 console_handler = logging.StreamHandler()
 formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
 console_handler.setFormatter(formatter)
-console_handler.setLevel(logging.DEBUG)
+console_handler.setLevel(logging.INFO)
 logger.addHandler(console_handler)
 
 
@@ -114,7 +114,7 @@ def column_name_formatter(header,label="H2O"):
     logger.debug(f"date = {date}") 
     
     # Extract the specified label percentage using a regex pattern
-    match = re.search(r'(\d+)%' + re.escape(label), header)
+    match = re.search(r'(\d+(?:\.\d+)?)%' + re.escape(label), header)
     if match:
         label_percentage = match.group(1).zfill(2)
         logger.debug(f"{label}_percentage= {label_percentage}")
