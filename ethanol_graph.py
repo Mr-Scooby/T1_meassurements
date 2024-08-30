@@ -30,7 +30,7 @@ def extract_etha_percentage(header):
 
 REGEX_ETHANOL = r'(\d{6}-\d{6} T1 \(\d+(?:\.\d+)?%ETHA\d+(?:\.\d+)?%D2O).*'
 
-def methanol_file_to_df(file_path): 
+def ethanol_file_to_df(file_path): 
 
     logger.info("converting file to DF")
     sections = xd.section_split(file_path, regex= REGEX_ETHANOL)
@@ -61,12 +61,56 @@ def methanol_file_to_df(file_path):
     logger.debug(f"data dict = \n" + "\n".join("{}\t{}".format(k, v) for k, v in data_dict.items()))
     return pd.DataFrame(data_dict)
 
+def plot_integral(df):
+ # Total number of columns
+    # Total number of columns
+    total_columns = len(df.columns)
+    
+    # Number of groups
+    num_groups = total_columns // 4
+    
+    # Determine number of rows needed for 2 columns
+    n_cols = 3
+    n_rows = (num_groups + n_cols - 1) // n_cols  # Calculate rows needed
+
+    # Create a figure with subplots arranged in a grid layout
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 3* n_rows), sharex=False)
+
+    # Flatten axes array for easy indexing
+    axes = axes.flatten()
+
+    # Loop through each group and plot the data
+    for i in range(num_groups):
+        # Calculate the column indices for this group
+        base_idx = i * 4
+        x_col = df.columns[base_idx]
+        oh_col = df.columns[base_idx + 1]
+        c21_col = df.columns[base_idx + 2]
+        c31_col = df.columns[base_idx + 3]
+        
+        ax = axes[i]
+        ax.plot(df[x_col], df[oh_col], label=f'OH')
+        ax.plot(df[x_col], df[c21_col], label=f'C2')
+        ax.plot(df[x_col], df[c31_col], label=f'C3')
+    
+        ax.set_title(f'{x_col}')
+        ax.set_ylabel('Values')
+        #ax.set_title(f'Plots for Group {i+1}')
+        ax.legend()
+    # Turn off any unused subplots
+    for j in range(num_groups, len(axes)):
+        axes[j].axis('off')
+
+    # Adjust layout
+    plt.tight_layout()
+    plt.show()    
+
 if __name__ == "__main__":
 
-    df =  methanol_file_to_df("ethanol_data.txt")
+    df =  ethanol_file_to_df("ethanol_data.txt")
     print(df.columns)
+    print(len(df.columns)/4)
     col = df.columns
-    plt.plot(df[col[0]], df[col[1]])
-    plt.plot(df[col[0]], df[col[2]])
-    plt.plot(df[col[0]], df[col[3]])
-    plt.show()
+    
+    plot_integral(df)
+   
