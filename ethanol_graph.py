@@ -9,17 +9,20 @@ import extract_data as xd
 from scipy.optimize import curve_fit
 import pandas as pd
 import re
+from inspect import signature
 
 plt.style.use('./graphs_style.mplstyle')
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
-console_handler = logging.StreamHandler()
-formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
-console_handler.setFormatter(formatter)
-console_handler.setLevel(logging.INFO)
-logger.addHandler(console_handler)
+def setup_log():
+    logger.setLevel(logging.DEBUG)
+    
+    console_handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(logging.DEBUG)
+    logger.addHandler(console_handler)
 
 
 def extract_etha_percentage(header):
@@ -109,12 +112,12 @@ def plot_integral(df):
     
     # Adjust layout for all figures
     
-def T1_calculation(x, y):
+def T1_calculation(x, y, p0 = [1,1]):
     # Define the fitting function
     f = lambda t, a, b: a * (1 - 2 * np.exp(-t /  b))
     
     # Perform curve fitting
-    popt, pcov = curve_fit(f, x, y)
+    popt, pcov = curve_fit(f, x, y, p0= p0 )
     logger.debug(f"popt output = {popt}")
     logger.debug(f"pcov output = {pcov}")
     
@@ -155,9 +158,9 @@ def ethanol_t1_calc(df):
         c3_col = df.columns[base_idx + 3]
 
         # Perform T1, a, and error calculations
-        oh_a, oh_t1, oh_a_error, oh_t1_error = T1_calculation(df[x_col], df[oh_col])
-        c2_a, c2_t1, c2_a_error, c2_t1_error = T1_calculation(df[x_col], df[c2_col])
-        c3_a, c3_t1, c3_a_error, c3_t1_error = T1_calculation(df[x_col], df[c3_col])
+        oh_a, oh_t1, oh_a_error, oh_t1_error = T1_calculation(df[x_col], df[oh_col], p0 = [df[oh_col].iloc[-1], 1 ])
+        c2_a, c2_t1, c2_a_error, c2_t1_error = T1_calculation(df[x_col], df[c2_col], p0 = [df[c2_col].iloc[-1], 1 ])
+        c3_a, c3_t1, c3_a_error, c3_t1_error = T1_calculation(df[x_col], df[c3_col], p0 = [df[c3_col].iloc[-1], 1 ])
 
         # Append the results to the corresponding lists in the dictionary
         sample_name = x_col.strip('_x')
@@ -183,51 +186,113 @@ def ethanol_t1_calc(df):
     logger.info(f"T1 values and a values:\n {t1_df}")
     return t1_df
 
-def integral_plot(df):
+def integral_plot(df, change_xaxis = True, fitting = False):
+
+    if change_xaxis == True:
+       x_range = [float(idx) for idx in df.index]
+    else: 
+        x_range = df.index
+    
+    groups = ["OH", "C2", "C3"]
+    colors = "brg"
+    func = lambda x,a,b : a *x + b 
 
     fig, ax = plt.subplots(3,1, figsize=(12,6), sharex = True, sharey = False ) 
-    ax[0].errorbar(df.index, df["OH_a"], yerr=df["OH_a_error"], fmt ="*", label = "OH", color="b")
-    ax[0].grid(":")
-    ax[0].legend()
-    ax[1].errorbar(df.index, df["C2_a"], yerr=df["C2_a_error"], fmt ="*", label = "C2", color="orange")
-    ax[1].grid(":")
-    ax[1].legend()
-    plt.ylabel("Integral")
-    ax[2].errorbar(df.index, df["C3_a"], yerr=df["C3_a_error"], fmt ="*", label = "C3", color="g")
-    ax[2].grid(":")
-    ax[2].legend()
+    for idx, group in enumerate(groups):
+        ax[idx].errorbar(x_range, df[group + "_a"], yerr=df[group + "_a_error"], fmt ="*", label = group , color= colors[idx])
+        ax[idx].grid(":")
+        ax[idx].legend()
+        if fitting == True: 
+            add_fit(df[group + "_a"], func, ax[idx], color=colors[idx])
     plt.xlabel("%ETHA")
 
 
-def T1_plot(t1_valeus):
 
-    fig = plt.figure("A", figsize=(12,5))
-    plt.errorbar(t1_valeus.index, t1_valeus["OH_T1"],yerr=t1_valeus["OH_T1_error"], fmt = "*",  label="OH")
-    plt.errorbar(t1_valeus.index, t1_valeus["C2_T1"],yerr=t1_valeus["C2_T1_error"], fmt = "*",  label="C2" )
-    plt.errorbar(t1_valeus.index, t1_valeus["C3_T1"],yerr=t1_valeus["C3_T1_error"], fmt = "*",  label="C3" )
+def T1_plot(t1_valeus, change_xaxis= True, fitting = False):
 
-    plt.grid(":")
-    plt.legend()
-    plt.xlabel("% Etha")
-    plt.ylabel("T1 [s]")
+    fig, ax  = plt.subplots(1,1, figsize=(12,5))
+    x_range = t1_valeus.index
+    
+    groups = ["OH", "C2", "C3"]
+    color = "brg"
+
+    fit_func = lambda x,a,b,d : a * np.exp(-  b * x ) + d
+    #fit_func = lambda x,a,b : 1 / ( a * x + b) 
+    if change_xaxis == True: 
+        x_range = [float(idx) for idx in t1_valeus.index]
+        ax.set_xlim([0, max(x_range) * 1.05 ])
+
+    for idx, group in enumerate(groups):
+        ax.errorbar(x_range, t1_valeus[group + "_T1"], yerr=t1_valeus[group + "_T1_error"], fmt = "*",  label= group, color  = color[idx])
+
+        if fitting == True: 
+            add_fit(t1_valeus[group + "_T1"], fit_func, ax, color[idx])
+
+    ax.grid(":")
+    ax.legend()
+    ax.set_xlabel("% Etha")
+    ax.set_ylabel("T1 [s]")
     plt.tight_layout()
 
-
-def plt_fitting(sample_idxs, fitting_df, data_df ):
+def add_fit(df, fit_func , ax, color = "b"):
     """
+    Adds the fitting curve to the plot. 
+    Args: 
+        df: DataFrame: with the values to fit
+        ax: Fig.axes: axes of the plot to insert the fitting curve
+    returns:
+        ax: with the fitting inserted.
+    """
+    
+    # Extract x and y data from df
+    x_range = np.array([float(idx) for idx in df.index])
+    y_data = df.values
+    
+    # Determine the number of parameters in fit_func using inspect.signature
+    num_params = len(signature(fit_func).parameters) - 1  # Exclude the first parameter `x`
+    
+    # Generate initial guess (p0) based on the number of parameters
+    # Here, we simply initialize all parameters as 1.0, except the first and last point.
+    p0 = [df.values[0]] + [0.3] * (num_params - 2) + [df.values[-1]]
+
+    # Perform the curve fitting
+    popt, pcov = curve_fit(fit_func, x_range, y_data, p0=p0)
+    
+    # Log the results
+    logger.debug(f"popt output = {popt}")
+    logger.debug(f"pcov output = {pcov}")
+    
+    # Generate the x values for plotting the fit
+    x = np.linspace(x_range.min(), x_range.max(), 500)
+    
+    # Plot the fit on the axes with the fitted parameters
+    ax.plot(x, fit_func(x, *popt), color=color)
+    
+    return ax
+
+
+
+def plt_fitting_2(sample_idxs, fitting_df, data_df ):
+    """
+    Plots the fitting for the data recorded in Mnova for the intergals.
     args: 
         smaple_idxs: int ot list: provides the indices of the samples to make the fitting plot
         fitting_df: DataFrame: With the smaples ids and the fitting parameters to make the plot.
         data_df: DataFrame: With the data extracted from the file
+
+    retruns:
+        figure
     """
+    # Loc samples names 
+    samples = fitting_df.loc[sample_idxs, "sample" ]
+    # Ensure samples is always a list, even if it's a single string
+    if isinstance(samples, pd.Series):
+        samples = samples.tolist()  # Convert to list if it's a Series
+    else:
+        samples = [samples]  # Wrap the single string in a list
+    logger.info(f"plt_fitting_2: samples = {samples}")
 
-    # data type formatting 
-    if type(sample_idxs) is not list:
-        sample_idxs = [sample_idxs]
-
-    samples = fitting_df.iloc[sample_idxs, 0] # Loc sample name from idx. 0 is the sample column
-
-    fig, axes = plt.subplots(len(sample_idxs), 1 , figsize=(12, 9 ), sharex=False)
+    fig, axes = plt.subplots(len(samples), 1 , figsize=(12, 8 ), sharex=False)
     # Ensure axes is always treated as an array, even for a single subplot
     axes = np.atleast_1d(axes)
     axes = axes.flatten()
@@ -242,12 +307,13 @@ def plt_fitting(sample_idxs, fitting_df, data_df ):
     df_indexed = fitting_df.set_index("sample")
     # Plot for each sample
     for i, sample in enumerate(samples):
+        logger.debug(f"plt_fitting_2: loop: sample = {sample}")
         x_data = data_df[sample + "_x"]
         
         t = np.linspace(0, x_data.iloc[-1])
         for y in y_series:
             # Scatter multiple y-series for each sample on the same subplot
-            axes[i].scatter(x_data, data_df[sample + "_"+y], label= y)
+            axes[i].scatter(x_data, data_df[sample + "_"+y], label= y, marker="x")
 
             M , T1 = df_indexed.loc[sample, [y+"_a", y+"_T1" ]]
             axes[i].plot(t, fitting(M, T1, t)  )
@@ -257,13 +323,15 @@ def plt_fitting(sample_idxs, fitting_df, data_df ):
         axes[i].legend(loc = "lower right")
         axes[i].grid(":")
 
-    
+
 
 
 if __name__ == "__main__":
 
+    setup_log()
     # Extracting data from file
-    df =  ethanol_file_to_df("ethanol_data_9.txt")
+    file = input("File number : ")
+    df =  ethanol_file_to_df(f"ethanol_data_{file}.txt")
     # Calculating fitting to T1 Curve from data.
     fitting_df = ethanol_t1_calc(df)
     
@@ -271,13 +339,23 @@ if __name__ == "__main__":
     magentization_df = fitting_df.filter(regex="^sample$|_a.*", axis=1)
     logger.info(f"data frame filtered with magentization:\n {magentization_df}")
 
-    T1_df = fitting_df.filter(regex="^(?!.*_a).*", axis=1)
-    logger.info(f"data frame filtered with T1 values :\n {T1_df}")
-    #plt_fitting([14,15], fitting_df, df )
-    #integral_plot(fitting_df)
-    #T1_plot(fitting_df)
+    #T1_df = fitting_df.filter(regex="^(?!.*_a).*", axis=1)
+    #logger.info(f"data frame filtered with T1 values :\n {T1_df}")
+    #plt_fitting([2,3,4], fitting_df, df )
+    #integral_plot(fitting_df, True, True )
+    #T1_plot(fitting_df, change_xaxis= True , fitting = True)
+    
     #plot_integral(df)
     
+    #plt_fitting_2(["02"], fitting_df, df )
+    #plt.show()
+    #logger.info(fitting_df["OH_T1"])#.iloc[:,1])
+
+    T1_plot(fitting_df.loc["01":"80"], fitting= True)
     plt.show()
+
+
+#    £samples = fitting_df.loc["01", "sample" ] # Loc sample name from idx. 0 is the sample column
+#ogger.info([ i for i in samples])
 
 
